@@ -16,19 +16,26 @@ end
 
 class Cube
 	attr_accessor :cube, :aliases
-	attr_accessor :_L, :_R
 	attr_accessor :U, :L, :R, :F, :D, :B
+	# we need @_L and @_R to be defined separately from @L and @R because...
+	# ... @U and @D will represent first and second of an array, and so...
+	# ... when it comes down to the x axis of a face and we need either first...
+	# ... or second, we cannot merely reuse @L and @R.
+	attr_accessor :_L, :_R
+
 	@_L, @_R = 0, 1
 	@U, @D, @L, @R, @F, @B = 0, 1, 2, 3, 4, 5
 	
 	def makeFace(face)
+		# a face is of the form [[LUL, LUR], [LDL, LDR]], where...
+		# ... LUL et. al. are expressed as [@L, @U, @_L].
 		[[[face, @U, @_L], [face, @U, @_R]], 
 		 [[face, @D, @_L], [face, @D, @_R]]]
 	end
 	
 	def initialize
 		# set instance variables, including cubie naming, initial cube, ...
-		# ... and the variuous faces to each cubie (not yet put to use).
+		# ... and the various faces to each cubie (not yet put to use).
 		@_L, @_R = 0, 1
 		@U, @D, @L, @R, @F, @B = 0, 1, 2, 3, 4, 5
 		@cube = [makeFace(@U), 
@@ -38,6 +45,8 @@ class Cube
 			 makeFace(@F), 
 			 makeFace(@B)]
 		
+		# aliases are not yet put to use but will be used to identify...
+		# ... which cubes were permuted, which were oriented.
 		@aliases = [
 			[[:U, :U, :_L],[:L, :U, :_L],[:B, :U, :_R]],
 			[[:U, :U, :_R],[:R, :U, :_R],[:B, :U, :_L]],
@@ -57,16 +66,24 @@ class Cube
 	end
 	
 	def getCubie(accessor)
-		# take a cubie name (e.g., [@L, @U, @_L]) and find cubie...
+		# take a cubie name (e.g., [@L, @U, @_L]) and find the cubie...
 		# ... value at that position.
 		@cube[accessor[0]][accessor[1]][accessor[2]]
 	end
 	
 	def setCubie(cubie, value)
+		# take a cubie name (e.g., [@L, @U, @_L]) and set the cubie...
+		# ... value at that position.
 		@cube[cubie[0]][cubie[1]][cubie[2]] = value
 	end
 	
 	def permute(permutation)
+		# a cyclical permutation is traditionally expressed as (a, b, c)...
+		# ... thus our representation takes on a similar form, [a, b, c],...
+		# ... where each letter is a cubie position.
+
+		# to perform a permutation of this form, we cycle through each...
+		# ... term, taking the prior cubie and placing it in its new position.
 		previous = []				
 		permutation.each { |point|
 			cubieAtPoint = getCubie point
@@ -77,13 +94,11 @@ class Cube
 				previous =  cubieAtPoint
 			end
 		}
+		# since we are dealing with cyclical permutations, there is...
+		# ... "wrap-around".
 		setCubie(permutation.first, previous)
-		return self
-	end
-	
-	def cubie(face, y, x)
-		[send(face), send(y), send(x)]
-	end
+		self
+	end	
 	
 	def to_s
 		# render a cube as a table.
@@ -121,29 +136,29 @@ class Cube
 		}.join(separatorLine) + headerLine
 	end
 
-	def formPermutation(permutation, cube)
+	def formPermutation(permutation)
 		# map symbolic cubie name, e.g., [:L, :U, :_L] to a list...
 		# ... of indices, e.g., [@L, @U, @_L].
 		permutation.map { |cubie|
 			cubie.map { |name|
-				cube.send name
+				send name
 			}
 		}
 	end
 
-	def faceTurn(face, cube)
+	def faceTurn(face)
 		# form the permutation corresponding to a turn of a given...
 		# ... face. this permutation includes a transpose of the...
 		# ... turned face and two cyclical permutations on adjacent...
 		# ... faces, as well.
 
 		# transpose...
-		cube.permute formPermutation([
+		permute formPermutation([
 			[face, :U, :_L], 
 			[face, :U, :_R], 
 			[face, :D, :_R], 
 			[face, :D, :_L]
-		], cube)
+		])
 
 		# permute adjacent faces
 		permutationFar = []
@@ -190,10 +205,10 @@ class Cube
 			]
 		end
 
-		cube.permute formPermutation(permutationFar, cube)
-		cube.permute formPermutation(permutationClose, cube)
+		permute formPermutation(permutationFar)
+		permute formPermutation(permutationClose)
 
-		cube
+		self
 	end
 end
 
@@ -202,12 +217,12 @@ cube = Cube.new()
 defCube = Cube.new()
 
 # make faceturn lambdas of our cube to be manipulated.
-U = lambda { |cube| cube.faceTurn :U, cube }
-D = lambda { |cube| cube.faceTurn :D, cube }
-L = lambda { |cube| cube.faceTurn :L, cube }
-R = lambda { |cube| cube.faceTurn :R, cube }
-F = lambda { |cube| cube.faceTurn :F, cube }
-B = lambda { |cube| cube.faceTurn :B, cube }
+U = lambda { |cube| cube.faceTurn :U }
+D = lambda { |cube| cube.faceTurn :D }
+L = lambda { |cube| cube.faceTurn :L }
+R = lambda { |cube| cube.faceTurn :R }
+F = lambda { |cube| cube.faceTurn :F }
+B = lambda { |cube| cube.faceTurn :B }
 
 # perform an algorithm:
 # 	L U' R' U L' U R U
