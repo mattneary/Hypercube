@@ -3,9 +3,9 @@ Hypercube
 
 Introduction
 ------------
-Hypercube is a Rubik's cube simulator for Ruby. Face-turns are lambdas that modify a given `Cube` object via `Cube#faceTurn`. These lambdas can then be composed via the infix `*` operator added to lambdas.
+Hypercube is a Rubik's cube simulator for Ruby. Face-turns are lambdas that modify a given `Cube` object via `Cube#faceTurn`. These lambdas can then be composed via the infix operator `*`.
 
-A usual Hypercube program would instantiate a cube, manipulate it with face-turns, and output the cube. However, more complex workflows are easily implemented, such as outputting the facelet permutations or a side-by-side grid of cube states.
+A usual Hypercube program would instantiate a cube, manipulate it with face-turns, and output the cube. However, more complex workflows are easily implemented, you can output facelet permutations or a side-by-side grid of cube states.
 
 Faceturns
 ---------
@@ -34,12 +34,12 @@ Analysis
 Hypercube aims to make analysis of Rubik's cube moves as straight-forward as possible. 
 
 1. `Cube#delta(other)` - outputs the permutations separating one cube state from another.
-2. `Cube#join_to_s(other, colored)` - forms a table of the cube with another beside it, output can be simplified to merely color rather than specific facelets.
+2. `Cube#join_to_s(other, simple)` - forms a table of the cube with another beside it, output can be simplified to merely color rather than specific facelets.
 
 Once the permutations of a move sequence have been identitifed, many conclusions may be reached; for example:
 
 - The region of manipulation, i.e., the *support*.
-- The period of the move sequence, i.e., the order.
+- The period of the move sequence, i.e., the *order*.
 - Intermediary states of an algorithm to give insight into the inner-workings of an algorithm.
 
 Conclusion
