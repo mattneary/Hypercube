@@ -176,8 +176,14 @@ class Cube
 		cyclesModified = false
 		unionCycles = cycles.select { |cycle|
 			supersets = cycles.select { |comp|
+				# consider only the larger of the two sets
+				# TODO: consider that length could be equal...
 				comp.length > cycle.length
 			}.select { |comp|
+				# the prospective chains are supersets only if...
+				# ... they include all links of the permutation.
+				# TODO: consider whether only one link should be..
+				#	... required.
 				superset = true
 				cycle.each_slice(2) { |pair|
 					if comp.include? pair[0] or comp.include? pair[1]
@@ -189,6 +195,8 @@ class Cube
 				superset
 			}
 			if supersets.length > 0
+				# if a superset was found, filter the current...
+				# ... permutation out and embed it into the superset.
 				superset = supersets.first
 				cycle.each { |x|
 					superset.push x
@@ -196,42 +204,55 @@ class Cube
 				cyclesModified = true
 				false
 			else
+				# otherwise maintain this permutation
 				true
 			end
 		}
 		if cyclesModified
+			# if a change was made, look for overlap in the...
+			# ... newly formed set of permutations.
 			joinCycles unionCycles
 		else
+			# otherwise consider the permutations fully reduced.
 			unionCycles
 		end
 	end
 
 	def delta(default)
 		cycles = []
-		# form a delta of the cube from the default, broken down into groups of interdependence (cycles)
+		# form a delta of the cube from the default, broken down... 
+		# ... into groups of interdependence (cycles). Loop through...
+		# ... each dimesnion of the cube, select changes, group them.
 		@cube.zip(default).each { |face, defFace|
-			face.zip(defFace).each { |row, defRow|
-				row.zip(defRow).each { |cubie, defCubie|
-					inserted = false
-					if cubie != defCubie
-						cycles.each { |cycle|
-							if (not inserted) and (cycle.include? cubie or cycle.include? defCubie)
-								cycle.push cubie, defCubie
-								inserted = true
-							end
-						}
-						if not inserted
-							cycles.push [cubie, defCubie]
-						end
+		face.zip(defFace).each { |row, defRow|
+		row.zip(defRow).each { |cubie, defCubie|
+			inserted = false
+			if cubie != defCubie
+				cycles.each { |cycle|
+					# if the current link belongs in a already begun...
+					# ... cycle, push it.
+					if (
+					(not inserted) and 
+					(cycle.include? cubie or cycle.include? defCubie)
+					)
+						cycle.push cubie, defCubie
+						inserted = true
 					end
 				}
-			}
+				# if no begun cycle was a match, form a new one.
+				if not inserted
+					cycles.push [cubie, defCubie]
+				end
+			end
+		}
+		}
 		}
 
 		# reinforce the cyclical grouping by recursively checking for overlap
 		cycles = joinCycles cycles
 
-		# pair up cyclical groups and form permutation maps, then crawl the permutations
+		# pair up cyclical groups and form permutation maps,...
+		# ... then crawl the permutations from link to link.
 		cycles.each { |cycle|
 			permutation = {}
 			cycle.each_slice(2) { |cubies|
@@ -250,7 +271,7 @@ class Cube
 		# ... turned face and two cyclical permutations on adjacent...
 		# ... faces, as well.
 
-		# transpose...
+		# transpose the face which is turning.
 		permute formPermutation([
 			[face, :U, :_L], 
 			[face, :U, :_R], 
@@ -258,12 +279,10 @@ class Cube
 			[face, :D, :_L]
 		])
 
-		# permute adjacent faces
+		# permute adjacent faces.
 		permutationFar = []
 		permutationClose = []
 		if face == :U or face == :D
-			# :U =>
-			#	LUL FUL RUL BUR
 			permutationFar = [
 				[:L, face, :_L],
 				[:B, face, :_R],
@@ -278,9 +297,6 @@ class Cube
 
 			]
 		elsif face == :L or face == :R
-			# :L =>
-			#	UUL FUL DUR BDL
-			#	UDL FDL DDR BUL
 			third = face == :L ? :_L : :_R
 			permutationFar = [
 				[:U, :U, third],
@@ -299,11 +315,6 @@ class Cube
 				permutationClose = permutationClose.reverse
 			end
 		elsif face == :F or face == :B
-			# :F =>
-			#	UDL RUL DUL LDR
-			#	UDR RDL DUR LUR
-			# :B =>
-			#	
 			permutationFar = [
 				[:U, face == :F ? :D : :U, face == :F ? :_L : :_L],
 				[:R, face == :F ? :U : :U, face == :F ? :_L : :_R],
@@ -318,6 +329,7 @@ class Cube
 			]
 		end		
 
+		# perform designated permutations of adjacent facelets.
 		permute formPermutation(permutationFar)
 		permute formPermutation(permutationClose)
 
@@ -338,9 +350,10 @@ F = lambda { |cube| cube.faceTurn :F }
 B = lambda { |cube| cube.faceTurn :B }
 
 # perform an algorithm:
-# 	L U' R' U L' U R U
+# 	e.g., L U' R' U L' U R U
 (R * U * R.inv * U * R * U * U * R.inv * U * U)[cube]
 
+# identify the change invoked and its permutation form.
 cube.delta(defCube.cube)
 
 # print our results compared to our default cube in a table.
