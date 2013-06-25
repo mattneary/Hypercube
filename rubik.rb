@@ -113,7 +113,7 @@ class Cube
 		}.join("\n+----+----+\n") + "\n+---------+\n"
 	end
 	
-	def join_to_s(other)
+	def join_to_s(other, color)
 		# render two cubes side by side in a table.
 		names = ["U", "D", "L", "R", "F", "B"]
 		_names = ["L", "R"]
@@ -128,9 +128,18 @@ class Cube
 			'| ' + face.map { |row|
 				rowIndex += 1
 				row.map { |cubie|
-					names[cubie[0]] + names[cubie[1]] + _names[cubie[2]]
+					if color
+						' ' + names[cubie[0]] + ' '
+					else
+						names[cubie[0]] + names[cubie[1]] + _names[cubie[2]]
+					end
 				}.join(' | ') + ' || ' + other.cube[faceIndex][rowIndex].map { |cubie|
-					names[cubie[0]] + names[cubie[1]] + _names[cubie[2]]
+					if color
+						' ' + names[cubie[0]] + ' '
+					else
+						names[cubie[0]] + names[cubie[1]] + _names[cubie[2]]
+					end
+
 				}.join(' | ')
 			}.join(" | \n| ") + ' |'			
 		}.join(separatorLine) + headerLine
@@ -143,6 +152,95 @@ class Cube
 			cubie.map { |name|
 				send name
 			}
+		}
+	end
+
+	def nameCubie(cubie)
+		names = ["U", "D", "L", "R", "F", "B"]
+		_names = ["L", "R"]
+		names[cubie[0]] + names[cubie[1]] + _names[cubie[2]]
+	end
+
+	def crawlMap(map, seed)
+		# convert a hash represenetation of a permutation into a cyclical form
+		read = map[seed]
+		if not read
+			return []
+		end
+		read = read.clone
+		map.delete seed
+		[read].concat crawlMap(map, read)
+	end
+	
+	def joinCycles(cycles)
+		cyclesModified = false
+		unionCycles = cycles.select { |cycle|
+			supersets = cycles.select { |comp|
+				comp.length > cycle.length
+			}.select { |comp|
+				superset = true
+				cycle.each_slice(2) { |pair|
+					if comp.include? pair[0] or comp.include? pair[1]
+						superset = superset
+					else
+						superset = false
+					end
+				}
+				superset
+			}
+			if supersets.length > 0
+				superset = supersets.first
+				cycle.each { |x|
+					superset.push x
+				}
+				cyclesModified = true
+				false
+			else
+				true
+			end
+		}
+		if cyclesModified
+			joinCycles unionCycles
+		else
+			unionCycles
+		end
+	end
+
+	def delta(default)
+		cycles = []
+		# form a delta of the cube from the default, broken down into groups of interdependence (cycles)
+		@cube.zip(default).each { |face, defFace|
+			face.zip(defFace).each { |row, defRow|
+				row.zip(defRow).each { |cubie, defCubie|
+					inserted = false
+					if cubie != defCubie
+						cycles.each { |cycle|
+							if (not inserted) and (cycle.include? cubie or cycle.include? defCubie)
+								cycle.push cubie, defCubie
+								inserted = true
+							end
+						}
+						if not inserted
+							cycles.push [cubie, defCubie]
+						end
+					end
+				}
+			}
+		}
+
+		# reinforce the cyclical grouping by recursively checking for overlap
+		cycles = joinCycles cycles
+
+		# pair up cyclical groups and form permutation maps, then crawl the permutations
+		cycles.each { |cycle|
+			permutation = {}
+			cycle.each_slice(2) { |cubies|
+				cubie = cubies[0]
+				defCubie = cubies[1]
+				permutation[nameCubie(cubie)] = nameCubie(defCubie)
+			}
+			cycle = crawlMap permutation, permutation.keys.first
+			puts '('+cycle.join(' ')+')'
 		}
 	end
 
@@ -164,33 +262,48 @@ class Cube
 		permutationFar = []
 		permutationClose = []
 		if face == :U or face == :D
+			# :U =>
+			#	LUL FUL RUL BUR
 			permutationFar = [
 				[:L, face, :_L],
-				[:F, face, :_L],
+				[:B, face, :_R],
 				[:R, face, :_L],
-				[:B, face, :_L]
+				[:F, face, :_L]
 			]
 			permutationClose = [
 				[:L, face, :_R],
-				[:F, face, :_R],
+				[:B, face, :_L],
 				[:R, face, :_R],
-				[:B, face, :_R]
+				[:F, face, :_R]
+
 			]
 		elsif face == :L or face == :R
+			# :L =>
+			#	UUL FUL DUR BDL
+			#	UDL FDL DDR BUL
 			third = face == :L ? :_L : :_R
 			permutationFar = [
 				[:U, :U, third],
 				[:F, :U, third],
-				[:D, :U, third],
-				[:B, :D, third==:_L ? :_R : :_L],
+				[:D, :U, third==:_L ? :_R : :_L],
+				[:B, :D, third],
 			]
 			permutationClose = [
 				[:U, :D, third],
 				[:F, :D, third],
-				[:D, :D, third],
-				[:B, :U, third==:_L ? :_R : :_L]
+				[:D, :D, third==:_L ? :_R : :_L],
+				[:B, :U, third]
 			]
+			if face == :R
+				permutationFar = permutationFar.reverse
+				permutationClose = permutationClose.reverse
+			end
 		elsif face == :F or face == :B
+			# :F =>
+			#	UDL RUL DUL LDR
+			#	UDR RDL DUR LUR
+			# :B =>
+			#	
 			permutationFar = [
 				[:U, face == :F ? :D : :U, face == :F ? :_L : :_L],
 				[:R, face == :F ? :U : :U, face == :F ? :_L : :_R],
@@ -203,7 +316,7 @@ class Cube
 				[:D, face == :F ? :U : :D, face == :F ? :_R : :_R],
 				[:L, face == :F ? :U : :U, face == :F ? :_R : :_R]
 			]
-		end
+		end		
 
 		permute formPermutation(permutationFar)
 		permute formPermutation(permutationClose)
@@ -226,7 +339,9 @@ B = lambda { |cube| cube.faceTurn :B }
 
 # perform an algorithm:
 # 	L U' R' U L' U R U
-(L * U.inv * R.inv * U * L.inv * U * R * U)[cube]
+(R * U * R.inv * U * R * U * U * R.inv * U * U)[cube]
+
+cube.delta(defCube.cube)
 
 # print our results compared to our default cube in a table.
-print defCube.join_to_s(cube)
+print defCube.join_to_s(cube, false)
