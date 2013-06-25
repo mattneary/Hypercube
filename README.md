@@ -37,7 +37,7 @@ The default cube holds at each of the above articulated locations an array that 
 
 ```ruby
 rubik = Cube.new
-rubik[:U][:U][:_L] == [rubik.U, rubik.U, rubik._L]i
+rubik[:U][:U][:_L] == [rubik.U, rubik.U, rubik._L]
 ```
 
 Of course the reason for this equivalence is that we are dealing with a default cube. Upon manipulation the value at a facelet location will point to its origin and allow the facelet to be uniquely identitifed.
