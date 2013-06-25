@@ -46,7 +46,7 @@ Analysis
 --------
 Hypercube aims to make analysis of Rubik's cube moves as straight-forward as possible. 
 
-1. `Cube#delta(other)` - outputs the permutations separating one cube state from another.
+1. `Cube#delta(other, simple)` - outputs the permutations separating one cube state from another.
 2. `Cube#join_to_s(other, simple)` - forms a table of the cube with another beside it, output can be simplified to merely color rather than specific facelets.
 
 Once the permutations of a move sequence have been identitifed, many conclusions may be reached; for example:

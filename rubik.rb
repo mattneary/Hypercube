@@ -48,14 +48,14 @@ class Cube
 		# aliases are not yet put to use but will be used to identify...
 		# ... which cubes were permuted, which were oriented.
 		@aliases = [
-			[[:U, :U, :_L],[:L, :U, :_L],[:B, :U, :_R]],
-			[[:U, :U, :_R],[:R, :U, :_R],[:B, :U, :_L]],
+			[[:U, :U, :_L],[:L, :U, :_L],[:B, :U, :_L]],
+			[[:U, :U, :_R],[:R, :U, :_R],[:B, :U, :_R]],
 			[[:U, :D, :_L],[:L, :U, :_R],[:F, :U, :_L]],
 			[[:U, :D, :_R],[:R, :U, :_L],[:F, :U, :_R]],
-			[[:D, :U, :_L],[:F, :D, :_L],[:L, :D, :_R]],
-			[[:D, :U, :_R],[:F, :D, :_R],[:R, :D, :_L]],
-			[[:D, :D, :_L],[:L, :D, :_L],[:B, :D, :_R]],
-			[[:D, :D, :_R],[:R, :D, :_R],[:B, :D, :_L]]
+			[[:D, :U, :_L],[:F, :D, :_R],[:R, :D, :_L]],
+			[[:D, :U, :_R],[:F, :D, :_L],[:L, :D, :_R]],
+			[[:D, :D, :_L],[:R, :D, :_R],[:B, :D, :_R]],
+			[[:D, :D, :_R],[:L, :D, :_L],[:B, :D, :_L]]
 		].map { |group|
 			group.map { |names|
 				names.map { |name|
@@ -63,6 +63,13 @@ class Cube
 				}
 			}
 		}
+	end
+
+	def faceletToCubie(facelet)
+		# map facelets to a unique cubie identifier
+		nameCubie @aliases.select { |cubies|
+			cubies.include? facelet
+		}.first.first
 	end
 	
 	def getCubie(accessor)
@@ -181,15 +188,13 @@ class Cube
 				comp.length > cycle.length
 			}.select { |comp|
 				# the prospective chains are supersets only if...
-				# ... they include all links of the permutation.
-				# TODO: consider whether only one link should be..
-				#	... required.
-				superset = true
+				# ... they can pair with the current chain.
+				superset = false
 				cycle.each_slice(2) { |pair|
 					if comp.include? pair[0] or comp.include? pair[1]
-						superset = superset
+						superset = true
 					else
-						superset = false
+						superset = superset
 					end
 				}
 				superset
@@ -218,7 +223,7 @@ class Cube
 		end
 	end
 
-	def delta(default)
+	def delta(default, simple)
 		cycles = []
 		# form a delta of the cube from the default, broken down... 
 		# ... into groups of interdependence (cycles). Loop through...
@@ -258,7 +263,12 @@ class Cube
 			cycle.each_slice(2) { |cubies|
 				cubie = cubies[0]
 				defCubie = cubies[1]
-				permutation[nameCubie(cubie)] = nameCubie(defCubie)
+				if not simple
+					permutation[nameCubie(cubie)] = nameCubie(defCubie)
+				else
+					# TODO: remove the permutation redundancy created
+					permutation[faceletToCubie(cubie)] = faceletToCubie(defCubie)
+				end
 			}
 			cycle = crawlMap permutation, permutation.keys.first
 			puts '('+cycle.join(' ')+')'
@@ -351,10 +361,23 @@ B = lambda { |cube| cube.faceTurn :B }
 
 # perform an algorithm:
 # 	e.g., R U R' U R U2 R' U2
-(R * U * R.inv * U * R * U * U * R.inv * U * U)[cube]
+# (R * U * R.inv * U)[cube]
+# => 	(UUL LUR RUR FUR FDR)
+#	(RDL LUL UDL UUR UDR)
+#	(FUL BUR RUL DUL BUL)
+# (R * U * U * R.inv * U * U)[cube]
+# =>	(FUL UUL FDR UDR BUR)
+#	(DUL FUR UUR UDL BUL)
+#	(RDL RUL RUR LUR LUL)
+# <composition>
+# =>	(BUL UUL LUL)
+#	(UUR BUR RUR)
+#	(FUR UDR RUL)
+#(R * U * R.inv * U * R * U * U * R.inv * U * U)[cube]
+(L * U.inv * R.inv * U)[cube]
 
 # identify the change invoked and its permutation form.
-cube.delta(defCube.cube)
+cube.delta(defCube.cube, false)
 
 # print our results compared to our default cube in a table.
 print defCube.join_to_s(cube, false)
