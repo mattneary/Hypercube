@@ -5,7 +5,7 @@ Introduction
 ------------
 Hypercube is a Rubik's cube simulator for Ruby. Face-turns are lambdas that modify a given `Cube` object via `Cube#faceTurn`. These lambdas can then be composed via the infix operator `*`.
 
-A usual Hypercube program would instantiate a cube, manipulate it with face-turns, and output the cube. However, more complex workflows are easily implemented, you can output facelet permutations or a side-by-side grid of cube states.
+A usual Hypercube program would instantiate a cube, manipulate it with face-turns, and output the cube. However, more complex workflows are easily implemented; you can output facelet permutations or a side-by-side grid of cube states.
 
 Faceturns
 ---------
@@ -28,6 +28,19 @@ After having defined these shorthands and instantiated a cube you can compose fa
 (R * U * R.inv * U * R * U * U * R.inv * U * U)[cube]
 print cube.to_s
 ```
+
+Cube Structure
+--------------
+A cube is represented as an array of faces, which in turn are arrays of up- and down-layer, which are in turn pairs of left- and right-facelet. These arrays are addressed with symbols `:U, :D, ... :B` as well as `:_L` and `:_R`. The latter are used exclusively for the third layer down, access of a specific facelet.
+
+The default cube holds at each of the above articulated locations an array that serves as an address. For example:
+
+```ruby
+rubik = Cube.new
+rubik[:U][:U][:_L] == [rubik.U, rubik.U, rubik._L]i
+```
+
+Of course the reason for this equivalence is that we are dealing with a default cube. Upon manipulation the value at a facelet location will point to its origin and allow the facelet to be uniquely identitifed.
 
 Analysis
 --------
