@@ -350,7 +350,7 @@ F = lambda { |cube| cube.faceTurn :F }
 B = lambda { |cube| cube.faceTurn :B }
 
 # perform an algorithm:
-# 	e.g., L U' R' U L' U R U
+# 	e.g., R U R' U R U2 R' U2
 (R * U * R.inv * U * R * U * U * R.inv * U * U)[cube]
 
 # identify the change invoked and its permutation form.
