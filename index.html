@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Hypercube by mattneary</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+
+      <header>
+        <h1>Hypercube</h1>
+        <p>Rubik's cube manipulation for Ruby.</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+
+        <a href="https://github.com/mattneary/Hypercube" class="button fork"><strong>View On GitHub</strong></a>
+        <div class="downloads">
+          <span>Downloads:</span>
+          <ul>
+            <li><a href="https://github.com/mattneary/Hypercube/zipball/master" class="button">ZIP</a></li>
+            <li><a href="https://github.com/mattneary/Hypercube/tarball/master" class="button">TAR</a></li>
+          </ul>
+        </div>
+      </div><!-- end banner -->
+
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <h1>
+<a name="hypercube" class="anchor" href="#hypercube"><span class="octicon octicon-link"></span></a>Hypercube</h1>
+
+<h2>
+<a name="introduction" class="anchor" href="#introduction"><span class="octicon octicon-link"></span></a>Introduction</h2>
+
+<p>Hypercube is a Rubik's cube simulator for Ruby. Face-turns are lambdas that modify a given <code>Cube</code> object via <code>Cube#faceTurn</code>. These lambdas can then be composed via the infix operator <code>*</code>.</p>
+
+<p>A usual Hypercube program would instantiate a cube, manipulate it with face-turns, and output the cube. However, more complex workflows are easily implemented; you can output facelet permutations or a side-by-side grid of cube states.</p>
+
+<h2>
+<a name="faceturns" class="anchor" href="#faceturns"><span class="octicon octicon-link"></span></a>Faceturns</h2>
+
+<p>You will most likely begin with something like the following.</p>
+
+<div class="highlight"><pre><span class="n">cube</span> <span class="o">=</span> <span class="no">Cube</span><span class="o">.</span><span class="n">new</span><span class="p">()</span>
+
+<span class="n">U</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="o">|</span><span class="n">cube</span><span class="o">|</span> <span class="n">cube</span><span class="o">.</span><span class="n">faceTurn</span> <span class="ss">:U</span> <span class="p">}</span>
+<span class="n">D</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="o">|</span><span class="n">cube</span><span class="o">|</span> <span class="n">cube</span><span class="o">.</span><span class="n">faceTurn</span> <span class="ss">:D</span> <span class="p">}</span>
+<span class="n">L</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="o">|</span><span class="n">cube</span><span class="o">|</span> <span class="n">cube</span><span class="o">.</span><span class="n">faceTurn</span> <span class="ss">:L</span> <span class="p">}</span>
+<span class="n">R</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="o">|</span><span class="n">cube</span><span class="o">|</span> <span class="n">cube</span><span class="o">.</span><span class="n">faceTurn</span> <span class="ss">:R</span> <span class="p">}</span>
+<span class="n">F</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="o">|</span><span class="n">cube</span><span class="o">|</span> <span class="n">cube</span><span class="o">.</span><span class="n">faceTurn</span> <span class="ss">:F</span> <span class="p">}</span>
+<span class="n">B</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="o">|</span><span class="n">cube</span><span class="o">|</span> <span class="n">cube</span><span class="o">.</span><span class="n">faceTurn</span> <span class="ss">:B</span> <span class="p">}</span>
+</pre></div>
+
+<p>After having defined these shorthands and instantiated a cube you can compose face-turns with the <code>*</code> operator and access their inverses via <code>Proc#inv</code>. The following performs a corner orientation algorithm and outputs the result.</p>
+
+<div class="highlight"><pre><span class="p">(</span><span class="n">R</span> <span class="o">*</span> <span class="n">U</span> <span class="o">*</span> <span class="n">R</span><span class="o">.</span><span class="n">inv</span> <span class="o">*</span> <span class="n">U</span> <span class="o">*</span> <span class="n">R</span> <span class="o">*</span> <span class="n">U</span> <span class="o">*</span> <span class="n">U</span> <span class="o">*</span> <span class="n">R</span><span class="o">.</span><span class="n">inv</span> <span class="o">*</span> <span class="n">U</span> <span class="o">*</span> <span class="n">U</span><span class="p">)</span><span class="o">[</span><span class="n">cube</span><span class="o">]</span>
+<span class="nb">print</span> <span class="n">cube</span><span class="o">.</span><span class="n">to_s</span>
+</pre></div>
+
+<h2>
+<a name="cube-structure" class="anchor" href="#cube-structure"><span class="octicon octicon-link"></span></a>Cube Structure</h2>
+
+<p>A cube is represented as an array of faces, which in turn are arrays of up- and down-layer, which are in turn pairs of left- and right-facelet. These arrays are addressed with symbols <code>:U, :D, ... :B</code> as well as <code>:_L</code> and <code>:_R</code>. The latter are used exclusively for the third layer down, access of a specific facelet.</p>
+
+<p>The default cube holds at each of the above articulated locations an array that serves as an address. For example:</p>
+
+<div class="highlight"><pre><span class="n">rubik</span> <span class="o">=</span> <span class="no">Cube</span><span class="o">.</span><span class="n">new</span>
+<span class="n">rubik</span><span class="o">[</span><span class="ss">:U</span><span class="o">][</span><span class="ss">:U</span><span class="o">][</span><span class="ss">:_L</span><span class="o">]</span> <span class="o">==</span> <span class="o">[</span><span class="n">rubik</span><span class="o">.</span><span class="n">U</span><span class="p">,</span> <span class="n">rubik</span><span class="o">.</span><span class="n">U</span><span class="p">,</span> <span class="n">rubik</span><span class="o">.</span><span class="n">_L</span><span class="o">]</span>
+</pre></div>
+
+<p>Of course the reason for this equivalence is that we are dealing with a default cube. Upon manipulation the value at a facelet location will point to its origin and allow the facelet to be uniquely identitifed.</p>
+
+<h2>
+<a name="analysis" class="anchor" href="#analysis"><span class="octicon octicon-link"></span></a>Analysis</h2>
+
+<p>Hypercube aims to make analysis of Rubik's cube moves as straight-forward as possible. </p>
+
+<ol>
+<li>
+<code>Cube#delta(other, simple)</code> - outputs the permutations separating one cube state from another.</li>
+<li>
+<code>Cube#join_to_s(other, simple)</code> - forms a table of the cube with another beside it, output can be simplified to merely color rather than specific facelets.</li>
+</ol><p>Once the permutations of a move sequence have been identitifed, many conclusions may be reached; for example:</p>
+
+<ul>
+<li>The region of manipulation, i.e., the <em>support</em>.</li>
+<li>The period of the move sequence, i.e., the <em>order</em>.</li>
+<li>Intermediary states of an algorithm to give insight into the inner-workings of an algorithm.</li>
+</ul><h2>
+<a name="closing-words" class="anchor" href="#closing-words"><span class="octicon octicon-link"></span></a>Closing Words</h2>
+
+<p>Hypercube is a work in progress. I hope to soon expand to a full 3x3x3 cube after I've made good progress in my research on group theory of the Rubik's cube. Its inspiration was to aid in derivation of algorithms.</p>
+      </section>
+      <footer>
+        <p>Project maintained by <a href="https://github.com/mattneary">mattneary</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
